@@ -27,6 +27,7 @@ func GetBusinesses(w http.ResponseWriter, r *http.Request) {
 	searchParam := "%" + searchTerm + "%"
 	rows, err := db.DB.Query(query, searchParam, pageSize, offset)
 	if err != nil {
+		log.Printf("Error querying database: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve businesses")
 		return
 	}
@@ -100,6 +101,7 @@ func getTotalCountWithSearch(searchParam string) (int, error) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
+	log.Printf("Responding with error: %s", message)
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
 
