@@ -39,8 +39,10 @@ func main() {
 	r.HandleFunc("/api/businesses", handlers.GetBusinesses).Methods("GET")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"}, // Adjust this in production
+		AllowedOrigins: []string{"https://furryapparel.com", "https://www.furryapparel.com"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		AllowedHeaders: []string{"*"},
 	})
 
 	port := os.Getenv("PORT")
