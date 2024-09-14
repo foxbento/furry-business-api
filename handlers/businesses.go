@@ -13,16 +13,19 @@ import (
 
 func GetBusinesses(w http.ResponseWriter, r *http.Request) {
 	page, pageSize := getPaginationParams(r)
+	searchTerm := r.URL.Query().Get("search")
 	offset := (page - 1) * pageSize
 
 	query := `
 		SELECT id, "Name", "Store/Socials Link", "Type of Clothing", "Country/Continent", "Country/State", 
 		"NSFW?", "General Overview/Personal Notes", "Gendered?", "Convention appearances?", "Notes"
 		FROM businesses 
+		WHERE LOWER("Name") LIKE LOWER($1) OR LOWER("Type of Clothing") LIKE LOWER($1)
 		ORDER BY id 
-		LIMIT $1 OFFSET $2
+		LIMIT $2 OFFSET $3
 	`
-	rows, err := db.DB.Query(query, pageSize, offset)
+	searchParam := "%" + searchTerm + "%"
+	rows, err := db.DB.Query(query, searchParam, pageSize, offset)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve businesses")
 		return
@@ -52,7 +55,7 @@ func GetBusinesses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	totalCount, err := getTotalCount()
+	totalCount, err := getTotalCountWithSearch(searchParam)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve total count")
 		return
@@ -85,9 +88,14 @@ func getPaginationParams(r *http.Request) (int, int) {
 	return page, pageSize
 }
 
-func getTotalCount() (int, error) {
+func getTotalCountWithSearch(searchParam string) (int, error) {
 	var count int
-	err := db.DB.QueryRow("SELECT COUNT(*) FROM businesses").Scan(&count)
+	query := `
+		SELECT COUNT(*) 
+		FROM businesses 
+		WHERE LOWER("Name") LIKE LOWER($1) OR LOWER("Type of Clothing") LIKE LOWER($1)
+	`
+	err := db.DB.QueryRow(query, searchParam).Scan(&count)
 	return count, err
 }
 
