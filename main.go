@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -38,11 +39,17 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/businesses", handlers.GetBusinesses).Methods("GET")
 
+	// Determine allowed origins based on environment
+	allowedOrigins := []string{"https://furryapparel.com", "https://www.furryapparel.com"}
+	if os.Getenv("ENVIRONMENT") == "development" {
+		allowedOrigins = append(allowedOrigins, "http://localhost:3000")
+	}
+
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"https://furryapparel.com", "https://www.furryapparel.com"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   allowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
-		AllowedHeaders: []string{"*"},
+		AllowedHeaders:   []string{"*"},
 	})
 
 	port := os.Getenv("PORT")
@@ -50,5 +57,6 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("Server starting on port %s", port)
+	log.Printf("Allowed origins: %s", strings.Join(allowedOrigins, ", "))
 	log.Fatal(http.ListenAndServe(":"+port, c.Handler(r)))
 }
